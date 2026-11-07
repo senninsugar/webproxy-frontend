@@ -1,0 +1,33 @@
+<!doctype html><html lang=ja><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Proxy</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+font:16px/1.5 -apple-system,system-ui,sans-serif;background:#0b0d10;color:#e7e9ea;padding:24px}
+h1{font-size:20px;font-weight:600;margin:0 0 16px;text-align:center}
+form{display:flex;gap:8px;max-width:640px;width:100%;margin:0 auto}
+input{flex:1;padding:13px 14px;font-size:16px;border-radius:12px;border:1px solid #2a2f36;background:#15181c;color:#fff;outline:none}
+input:focus{border-color:#3b82f6}
+button{padding:13px 20px;font-size:16px;font-weight:600;border-radius:12px;border:0;background:#3b82f6;color:#fff}
+#s{max-width:640px;width:100%;margin:12px auto 0;font-size:13px;color:#8b939c;text-align:center}
+</style>
+<h1>Web Proxy</h1>
+<form id=f><input id=u placeholder="example.com" autocapitalize=off autocorrect=off spellcheck=false autofocus><button disabled>Go</button></form>
+<p id=s>起動中…</p>
+<script>
+var K=null;
+function enc(u){var b=new TextEncoder().encode(u),i,s="";for(i=0;i<b.length;i++)b[i]^=K.charCodeAt(i%K.length);
+for(i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function norm(v){v=v.trim();if(!v)return"";if(!/^[a-z]+:\/\//i.test(v))v="https://"+v;try{return new URL(v).href}catch(e){return""}}
+var s=document.getElementById("s"),btn=document.querySelector("button");
+document.getElementById("f").onsubmit=function(e){e.preventDefault();var t=norm(document.getElementById("u").value);if(t&&K)location.href="/svc/"+enc(t)};
+(async function(){
+  try{
+    K=await (await fetch("/api/key",{cache:"no-store"})).text();
+    if(!K)throw new Error("no key");
+    await navigator.serviceWorker.register("/sw.js",{scope:"/"});
+    btn.disabled=false;s.textContent="準備完了";
+  }catch(e){s.textContent="起動失敗: "+e.message}
+})();
+</script></html>
